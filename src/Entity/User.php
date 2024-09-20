@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\DTO\UserDTO;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -105,5 +106,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public static function fromDTO(UserDTO $dto)
+    {
+        return (new self())
+            ->setEmail($dto->email)
+            ->setPassword($dto->password);
     }
 }
