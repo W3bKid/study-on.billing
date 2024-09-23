@@ -80,8 +80,11 @@ class UserController extends AbstractController
 
         $entityManager->flush();
 
-        return new JsonResponse([
-            "token" => $JWTManager->create($user),
-        ]);
+        return new JsonResponse(
+            [
+                "token" => $JWTManager->create($user),
+            ],
+            201
+        );
     }
 }
