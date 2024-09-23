@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerBuilder;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,12 +20,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserController extends AbstractController
 {
     private UserPasswordHasherInterface $passwordHasher;
-    public EntityManagerInterface $entityManager;
 
-    public function __construct(
-        UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager
-    ) {
+    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    {
         $this->passwordHasher = $passwordHasher;
     }
 
@@ -37,7 +35,9 @@ class UserController extends AbstractController
     public function register(
         Request $request,
         ValidatorInterface $validator,
-        UserRepository $repository
+        EntityManagerInterface $entityManager,
+        UserRepository $repository,
+        JWTTokenManagerInterface $JWTManager
     ) {
         $serializer = SerializerBuilder::create()->build();
         $userDto = $serializer->deserialize(
@@ -71,12 +71,17 @@ class UserController extends AbstractController
         $user = User::fromDTO($userDto);
 
         $user->setPassword(
-            $this->passwordHasher->hashPassword($user, $userDto->password)
+            $this->passwordHasher->hashPassword($user, $user->getPassword())
         );
 
-        $this->entityManager->persist($user);
-        dd($user);
+        $user->setRoles(["ROLE_USER"]);
 
-        $this->entityManager->flush();
+        $entityManager->persist($user);
+
+        $entityManager->flush();
+
+        return new JsonResponse([
+            "token" => $JWTManager->create($user),
+        ]);
     }
 }

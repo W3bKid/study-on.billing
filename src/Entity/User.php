@@ -114,4 +114,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             ->setEmail($dto->email)
             ->setPassword($dto->password);
     }
+
+    public function __toString()
+    {
+        return $this->id;
+    }
 }
