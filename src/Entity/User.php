@@ -33,6 +33,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[ORM\Column(options: ["default" => 0])]
+    private ?int $balance = 0;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -118,5 +121,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __toString()
     {
         return $this->id;
+    }
+
+    public function getBalance(): ?int
+    {
+        return $this->balance;
+    }
+
+    public function setBalance(int $balance): static
+    {
+        $this->balance = $balance;
+
+        return $this;
     }
 }

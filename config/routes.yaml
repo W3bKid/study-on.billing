@@ -4,6 +4,12 @@ controllers:
     namespace: App\Controller\Api\V1
   type: attribute
 
-auth:
-  path: /api/v1/users/auth
-  methods: ["POST"]
+app.swagger_ui:
+  path: /api/v1/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+
+app.swagger:
+  path: /api/v1/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger }

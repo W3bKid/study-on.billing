@@ -6,6 +6,7 @@ use App\Entity\User;
 use JMS\Serializer\Annotation\SerializedName;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 class UserDTO
@@ -16,5 +17,13 @@ class UserDTO
     public string $email;
 
     #[SerializedName("password")]
+    #[
+        Length(
+            min: 6,
+            max: 255,
+            minMessage: "Password id too short",
+            maxMessage: "Password is too long"
+        )
+    ]
     public string $password;
 }
