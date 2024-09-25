@@ -45,11 +45,6 @@ class UserController extends AbstractController
         return new ResponseIsSuccessful();
     }
 
-    // schema: new OA\Schema(
-    //     properties: ["username", "password"],
-    //     type: "json"
-    // ),
-    //
     #[Route(path: "/register", name: "api_v1_register", methods: ["POST"])]
     #[
         OA\Post(
@@ -159,7 +154,6 @@ class UserController extends AbstractController
         );
     }
 
-    #[Route(path: "/users/current", methods: ["GET"])]
     #[
         OA\Get(
             path: "/api/v1/users/current",
@@ -200,6 +194,7 @@ class UserController extends AbstractController
     ]
     #[Security(name: "Bearer")]
     #[OA\Tag(name: "user")]
+    #[Route(path: "/users/current", methods: ["GET"])]
     public function currentUser(EntityManagerInterface $entityManager)
     {
         $decodedToken = $this->jwtManager->decode(

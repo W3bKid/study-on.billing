@@ -78,5 +78,12 @@
             "allow-contrib": false,
             "require": "7.1.*"
         }
+    },
+    "require-dev": {
+        "liip/test-fixtures-bundle": "^3.1",
+        "phpunit/phpunit": "^11.3",
+        "symfony/browser-kit": "7.1.*",
+        "symfony/css-selector": "7.1.*",
+        "symfony/dom-crawler": "7.1.*"
     }
 }

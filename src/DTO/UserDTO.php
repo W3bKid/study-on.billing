@@ -17,6 +17,7 @@ class UserDTO
     public string $email;
 
     #[SerializedName("password")]
+    #[NotBlank]
     #[
         Length(
             min: 6,
