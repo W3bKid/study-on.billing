@@ -3,8 +3,11 @@
 namespace App\EventListener;
 
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
@@ -17,16 +20,35 @@ final class ExceptionListener
         $message = $event->getThrowable()->getMessage();
 
         if ($code == 500) {
-            $message = "Iternal server error";
+            $event->setResponse(
+                new JsonResponse("Iternal server error", $code)
+            );
         }
 
-        $responseData = [
-            "error" => [
-                "code" => $code,
-                "message" => $event->getThrowable()->getMessage(),
-            ],
-        ];
+        if ($event->getThrowable() instanceof BadRequestHttpException) {
+            $event->setResponse(
+                new JsonResponse(
+                    [
+                        "message" => $message,
+                    ],
+                    Response::HTTP_BAD_REQUEST
+                )
+            );
+        }
 
-        $event->setResponse(new JsonResponse($responseData, $code));
+        // if ($code == 500) {
+        //     $event->setResponse(
+        //         new JsonResponse("Iternal server error", $code)
+        //     );
+        // } else {
+        //     $responseData = [
+        //         "error" => [
+        //             "code" => $code,
+        //             "message" => $event->getThrowable()->getMessage(),
+        //         ],
+        //     ];
+
+        //     $event->setResponse(new JsonResponse($responseData, $code));
+        // }
     }
 }
