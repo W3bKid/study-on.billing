@@ -4,7 +4,6 @@ namespace App\Tests\Controller;
 
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
-use App\Kernel;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
@@ -133,7 +132,16 @@ class UserControllerTest extends WebTestCase
         $response = $this->client->getResponse()->getContent();
         $token = json_decode($response, true)["token"];
 
-        $this->token = "Bearer . $token";
+        $this->client->request(
+            "GET",
+            "/api/v1/users/current",
+            [],
+            [],
+            ["HTTP_AUTHORIZATION" => "Bearer " . '312312312312']
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+
 
         $this->client->request(
             "GET",
@@ -192,5 +200,61 @@ class UserControllerTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testCurrentUserWithoutToken()
+    {
+        set_exception_handler(null);
+
+        $client = static::getClient();
+
+        $client->request('GET', '/api/v1/users/current', [], [], ['HTTP_AUTHORIZATION' => 'Bearer' . " "]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testAdmin() {
+        set_exception_handler(null);
+
+        $client = static::getClient();
+
+        $email = "admin@billing.ru";
+        $password = "12345678";
+
+        $client->jsonRequest('POST', '/api/v1/auth', [
+            "username" => $email,
+            "password" => $password
+        ]);
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $response = $client->getResponse();
+        $responseData = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $token = $responseData['token'];
+        $this->assertTrue(isset($token));
+    }
+
+    public function testAdminFailed() {
+        set_exception_handler(null);
+
+        $client = static::getClient();
+
+        $email = "admin@billing.ru";
+        $password = "pas";
+
+        $client->jsonRequest('POST', '/api/v1/auth', [
+            "username" => $email,
+            "password" => $password
+        ]);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+
+        $email = "email";
+        $password = "12345678";
+
+        $client->jsonRequest('POST', '/api/v1/auth', [
+            "username" => $email,
+            "password" => $password
+        ]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 }

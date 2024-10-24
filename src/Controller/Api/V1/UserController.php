@@ -2,16 +2,14 @@
 
 namespace App\Controller\Api\V1;
 
-use ApiPlatform\OpenApi\Model\RequestBody;
 use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerBuilder;
-use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationFailureResponse;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations\Items;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +18,6 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use OpenApi\Attributes as OA;
 
 #[Route(path: "/api/v1")]
 class UserController extends AbstractController
@@ -49,8 +46,8 @@ class UserController extends AbstractController
     #[
         OA\Post(
             path: "/api/v1/register",
-            summary: "User Authentication",
             description: "Authentication and get token",
+            summary: "User Authentication",
             requestBody: new OA\RequestBody(
                 required: true,
                 content: [
@@ -58,14 +55,14 @@ class UserController extends AbstractController
                         properties: [
                             new OA\Property(
                                 property: "email",
-                                type: "string",
                                 description: "username (user email)",
+                                type: "string",
                                 example: "user@example.com"
                             ),
                             new OA\Property(
                                 property: "password",
-                                type: "string",
                                 description: "password (user password)",
+                                type: "string",
                                 example: "password"
                             ),
                         ]
@@ -74,8 +71,8 @@ class UserController extends AbstractController
             ),
             responses: [
                 new OA\Response(
-                    description: "success registration",
                     response: 201,
+                    description: "success registration",
                     content: new OA\JsonContent(
                         properties: [
                             new OA\Property(property: "token", type: "string"),
@@ -83,8 +80,8 @@ class UserController extends AbstractController
                     )
                 ),
                 new OA\Response(
-                    description: "invalid credentials",
                     response: 400,
+                    description: "invalid credentials",
                     content: new OA\JsonContent(
                         properties: [
                             new OA\Property(
