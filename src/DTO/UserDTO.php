@@ -12,12 +12,12 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class UserDTO
 {
     #[SerializedName("email")]
-    #[NotBlank]
+    #[NotBlank(message: "Email value should not be blank.")]
     #[Email]
     public string $email;
 
     #[SerializedName("password")]
-    #[NotBlank]
+    #[NotBlank(message: "Password value should not be blank.")]
     #[
         Length(
             min: 6,

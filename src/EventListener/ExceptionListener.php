@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Exception\BillingUnavailableException;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,20 +15,23 @@ final class ExceptionListener
     #[AsEventListener(event: KernelEvents::EXCEPTION)]
     public function onKernelException(ExceptionEvent $event): void
     {
-//        dd($event->getThrowable(), 123);
-
         $exception = $event->getThrowable();
 
         $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
+        $message = $exception->getMessage();
 
         if ($exception instanceof HttpExceptionInterface) {
             $statusCode = $exception->getStatusCode();
         }
 
+        if($exception instanceof BillingUnavailableException) {
+            $statusCode = Response::HTTP_SERVICE_UNAVAILABLE;
+            $message = "Сервис временно недоступен";
+        }
 
         $data = [
             'code' => $statusCode,
-            'message' => $exception->getMessage(),
+            'message' => $message,
         ];
 
         $event->setResponse(new JsonResponse($data, $statusCode));

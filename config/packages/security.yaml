@@ -25,7 +25,11 @@ security:
     api:
       pattern: ^/api/v1
       stateless: true
+      entry_point: jwt
       jwt: ~
+      refresh_jwt:
+        check_path: /api/v1/token/refresh
+
 
   access_control:
     - { path: ^/auth, roles: PUBLIC_ACCESS }

@@ -6,6 +6,8 @@ use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use JMS\Serializer\SerializerBuilder;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Nelmio\ApiDocBundle\Annotation\Security;
@@ -13,7 +15,6 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Test\Constraint\ResponseIsSuccessful;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -39,7 +40,6 @@ class UserController extends AbstractController
     #[Route(path: "/auth", name: "api_v1_auth", methods: ["POST"])]
     public function auth()
     {
-        return new ResponseIsSuccessful();
     }
 
     #[Route(path: "/register", name: "api_v1_register", methods: ["POST"])]
@@ -100,7 +100,9 @@ class UserController extends AbstractController
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
         UserRepository $repository,
-        JWTTokenManagerInterface $JWTManager
+        JWTTokenManagerInterface $JWTManager,
+        RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        RefreshTokenManagerInterface $refreshTokenManager
     ) {
         $serializer = SerializerBuilder::create()->build();
         $userDto = $serializer->deserialize(
@@ -110,18 +112,16 @@ class UserController extends AbstractController
         );
 
         $errors = $validator->validate($userDto);
-
         if (count($errors) > 0) {
             return new JsonResponse(
                 [
-                    "message" => "Invalid credantials",
+                    "message" => $errors->get(0)->getMessage(),
                 ],
                 400
             );
         }
 
         $sameUser = $repository->findBy(["email" => $userDto->email]);
-
         if ($sameUser) {
             return new JsonResponse(
                 [
@@ -132,20 +132,24 @@ class UserController extends AbstractController
         }
 
         $user = User::fromDTO($userDto);
-
         $user->setPassword(
             $this->passwordHasher->hashPassword($user, $user->getPassword())
         );
 
         $user->setRoles(["ROLE_USER"]);
-
         $entityManager->persist($user);
-
         $entityManager->flush();
+
+        $refreshToken = $refreshTokenGenerator->createForUserWithTtl(
+            $user,
+            (new \DateTime())->modify('+1 month')->getTimestamp()
+        );
+        $refreshTokenManager->save($refreshToken);
 
         return new JsonResponse(
             [
                 "token" => $JWTManager->create($user),
+                'refreshToken' => $refreshToken->getRefreshToken()
             ],
             201
         );
