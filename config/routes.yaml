@@ -1,5 +1,6 @@
 controllers:
   resource:
+    prefix: /test
     path: ../src/Controller/Api/V1
     namespace: App\Controller\Api\V1
   type: attribute

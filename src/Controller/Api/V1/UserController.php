@@ -5,7 +5,9 @@ namespace App\Controller\Api\V1;
 use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\PaymentService;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -51,7 +53,7 @@ class UserController extends AbstractController
             requestBody: new OA\RequestBody(
                 required: true,
                 content: [
-                    "apllication\json" => new OA\JsonContent(
+                    "application\json" => new OA\JsonContent(
                         properties: [
                             new OA\Property(
                                 property: "email",
@@ -76,6 +78,7 @@ class UserController extends AbstractController
                     content: new OA\JsonContent(
                         properties: [
                             new OA\Property(property: "token", type: "string"),
+                            new OA\Property(property: "refreshToken", type: "string")
                         ]
                     )
                 ),
@@ -102,7 +105,8 @@ class UserController extends AbstractController
         UserRepository $repository,
         JWTTokenManagerInterface $JWTManager,
         RefreshTokenGeneratorInterface $refreshTokenGenerator,
-        RefreshTokenManagerInterface $refreshTokenManager
+        RefreshTokenManagerInterface $refreshTokenManager,
+        PaymentService $paymentService
     ) {
         $serializer = SerializerBuilder::create()->build();
         $userDto = $serializer->deserialize(
@@ -131,14 +135,21 @@ class UserController extends AbstractController
             );
         }
 
-        $user = User::fromDTO($userDto);
-        $user->setPassword(
-            $this->passwordHasher->hashPassword($user, $user->getPassword())
-        );
-
-        $user->setRoles(["ROLE_USER"]);
-        $entityManager->persist($user);
-        $entityManager->flush();
+        $entityManager->getConnection()->beginTransaction(); // suspend auto-commit
+        try {
+            $user = User::fromDTO($userDto);
+            $user->setPassword(
+                $this->passwordHasher->hashPassword($user, $user->getPassword())
+            );
+            $user->setRoles(["ROLE_USER"]);
+            $entityManager->persist($user);
+            $entityManager->flush();
+            $paymentService->deposit($user, $_ENV['INITIAL_DEPOSIT']);
+            $entityManager->getConnection()->commit();
+        } catch (Exception $e) {
+            $entityManager->getConnection()->rollBack();
+            throw $e;
+        }
 
         $refreshToken = $refreshTokenGenerator->createForUserWithTtl(
             $user,

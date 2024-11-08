@@ -3,7 +3,9 @@
 namespace App\DataFixtures;
 
 use App\Entity\User;
+use App\Service\PaymentService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\ORM\EntityManager;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -35,5 +37,7 @@ class UserFixtures extends Fixture
         $manager->persist($user);
 
         $manager->flush();
+
+        (new PaymentService())->deposit($adminUser, 100.00);
     }
 }

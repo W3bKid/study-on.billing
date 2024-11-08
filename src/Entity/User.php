@@ -36,6 +36,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(options: ["default" => 0])]
     private ?int $balance = 0;
 
+    #[ORM\OneToOne(mappedBy: 'billing_user', cascade: ['persist', 'remove'])]
+    private ?Transaction $transaction = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -131,6 +134,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setBalance(int $balance): static
     {
         $this->balance = $balance;
+
+        return $this;
+    }
+
+    public function getTransaction(): ?Transaction
+    {
+        return $this->transaction;
+    }
+
+    public function setTransaction(Transaction $transaction): static
+    {
+        // set the owning side of the relation if necessary
+        if ($transaction->getBillingUser() !== $this) {
+            $transaction->setBillingUser($this);
+        }
+
+        $this->transaction = $transaction;
 
         return $this;
     }

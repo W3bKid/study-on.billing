@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59434b9eae95e08cfb1230a14e26dc87",
+    "content-hash": "9d88ccf0dc29f0c85ba2fea12e53b622",
     "packages": [
         {
             "name": "api-platform/core",
@@ -2182,16 +2182,16 @@
         },
         {
             "name": "nelmio/api-doc-bundle",
-            "version": "v4.30.0",
+            "version": "v4.33.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nelmio/NelmioApiDocBundle.git",
-                "reference": "277fa17b912be31b5170e49f0924b1028058c938"
+                "reference": "9ee5f586213fc77c9adc56bd59cc9229a9da2527"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nelmio/NelmioApiDocBundle/zipball/277fa17b912be31b5170e49f0924b1028058c938",
-                "reference": "277fa17b912be31b5170e49f0924b1028058c938",
+                "url": "https://api.github.com/repos/nelmio/NelmioApiDocBundle/zipball/9ee5f586213fc77c9adc56bd59cc9229a9da2527",
+                "reference": "9ee5f586213fc77c9adc56bd59cc9229a9da2527",
                 "shasum": ""
             },
             "require": {
@@ -2292,7 +2292,7 @@
             ],
             "support": {
                 "issues": "https://github.com/nelmio/NelmioApiDocBundle/issues",
-                "source": "https://github.com/nelmio/NelmioApiDocBundle/tree/v4.30.0"
+                "source": "https://github.com/nelmio/NelmioApiDocBundle/tree/v4.33.0"
             },
             "funding": [
                 {
@@ -2300,7 +2300,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-09-14T10:54:47+00:00"
+            "time": "2024-10-31T12:10:57+00:00"
         },
         {
             "name": "nikic/php-parser",
