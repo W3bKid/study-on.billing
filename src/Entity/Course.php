@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\DTO\CourseDTO;
 use App\Enum\CourseType;
 use App\Repository\CourseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -139,5 +140,14 @@ class Course
         $this->title = $title;
 
         return $this;
+    }
+
+    public static function fromDto(CourseDto $dto): Course
+    {
+        return (new self())
+            ->setCharacterCode($dto->getCharacterCode())
+            ->setTitle($dto->getTitle())
+            ->setPrice($dto->getPrice())
+            ->setType(CourseType::VALUES[$dto->getType()]);
     }
 }

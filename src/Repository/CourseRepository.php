@@ -33,6 +33,13 @@ class CourseRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function save(Course $entity): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        $this->getEntityManager()->flush();
+    }
+
     //    /**
     //     * @return Course[] Returns an array of Course objects
     //     */

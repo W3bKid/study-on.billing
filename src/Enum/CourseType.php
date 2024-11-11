@@ -7,6 +7,12 @@ enum CourseType: int {
     case FULL_PAYMENT = 1;
     case FREE = 3;
 
+    public const VALUES = [
+        'Payment' => self::FREE,
+        'Rental' => self::RENTAL,
+        'Full Payment' => self::FULL_PAYMENT,
+    ];
+
     public function getName(): string {
         return match ($this) {
             self::RENTAL => 'rent',
@@ -14,4 +20,5 @@ enum CourseType: int {
             self::FREE => 'free',
         };
     }
+
 }

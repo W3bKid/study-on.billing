@@ -2,20 +2,26 @@
 
 namespace App\Controller\Api\V1;
 
+use App\DTO\CourseDTO;
+use App\Entity\Course;
 use App\Enum\CourseType;
 use App\Repository\CourseRepository;
 use App\Service\PaymentService;
 use App\Service\RoundPrice;
 use App\Service\UserService;
+use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException;
 use Nelmio\ApiDocBundle\Attribute\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\InsufficientAuthenticationException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use OpenApi\Attributes as OA;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route(path: "/api/v1/courses")]
 class CourseController extends AbstractController
@@ -50,7 +56,6 @@ class CourseController extends AbstractController
             ),
         ]
     )]
-    #[Route(path: "/")]
     #[Security(name: 'Bearer')]
     #[Route(path: '/', name: 'api_courses_get', methods: ['GET'])]
     public function list(CourseRepository $courseRepository): JsonResponse
@@ -167,5 +172,68 @@ class CourseController extends AbstractController
 
             throw new \Exception($e->getMessage());
         }
+    }
+
+    #[Route(path: '/', name: 'api_course_create', methods: ['POST'])]
+    #[Security(name: "Bearer")]
+    #[IsGranted("ROLE_SUPER_ADMIN")]
+    public function create(Request $request, CourseRepository $repository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $type = CourseType::VALUES[$request->request->get('type')];
+
+        $sameCourse = $repository->findBy(['character_code' => $request->request->get('character_code')]);
+
+        if ($sameCourse) {
+            return $this->json(['message' => 'Course with same character code already exists'], 409);
+        }
+
+        $courseDTO = (new CourseDTO())->setTitle($request->get('title'))
+            ->setPrice($request->get('price'))
+            ->setCharacterCode($request->get('character_code'))
+            ->setType($type);
+
+        $course = Course::fromDTO($courseDTO);
+        $entityManager->persist($course);
+        $entityManager->flush();
+        return $this->json(['success' => true], 201);
+    }
+
+    #[Route(path: '/{characterCode}', name: 'api_course_update', methods: ['PUT'])]
+    #[Security(name: "Bearer")]
+    #[IsGranted("ROLE_SUPER_ADMIN")]
+    public function edit(
+        string $characterCode,
+        Request $request,
+        CourseRepository $repository,
+        SerializerInterface $serializer
+    ): JsonResponse {
+        $course = $repository->findOneBy(['character_code' => $characterCode]);
+
+        if (!$course) {
+            return $this->json(['message' => "Course doesn't exists"], 422);
+        }
+        if ($characterCode !== $course->getCharacterCode() && $repository->count(['code' => $course->getCharacterCode()]) > 0) {
+            return $this->json(['error' => 'Course already exists'], 409);
+        }
+
+        $type = CourseType::VALUES[$request->request->get('type')] ?? null;
+
+        if (($type == CourseType::FULL_PAYMENT || $type == CourseType::RENTAL) && !$request->get('price')) {
+            return $this->json([
+                'message' => 'Course with Payment or Rental type must have price',
+                'code' => 422],
+                422
+            );
+        }
+
+        $courseDTO = $serializer->deserialize($request->getContent(), CourseDTO::class, 'json');
+
+        $course->setCharacterCode($courseDTO->getCharacterCode());
+        $course->setTitle($courseDTO->getTitle());
+        $course->setType(CourseType::VALUES[$courseDTO->getType()]);
+        $course->setPrice($courseDTO->getPrice());
+
+        $repository->save($course);
+        return $this->json(['success' => true], 200);
     }
 }
