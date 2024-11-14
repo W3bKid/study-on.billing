@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route(path: "/api/v1")]
@@ -135,7 +136,7 @@ class UserController extends AbstractController
             );
         }
 
-        $entityManager->getConnection()->beginTransaction(); // suspend auto-commit
+        $entityManager->getConnection()->beginTransaction();
         try {
             $user = User::fromDTO($userDto);
             $user->setPassword(
@@ -204,9 +205,10 @@ class UserController extends AbstractController
             ]
         )
     ]
-    #[Security(name: "Bearer")]
     #[OA\Tag(name: "user")]
     #[Route(path: "/users/current", methods: ["GET"])]
+    #[Security(name: "Bearer")]
+    #[IsGranted("ROLE_USER")]
     public function currentUser(EntityManagerInterface $entityManager)
     {
         $decodedToken = $this->jwtManager->decode(

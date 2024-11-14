@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\DTO\CourseDTO;
+use App\DTO\Create\CreateCourseDTO;
 use App\Enum\CourseType;
 use App\Repository\CourseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -35,7 +36,7 @@ class Course
     #[ORM\Column(type: Types::SMALLINT)]
     private ?int $type = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?float $price = null;
 
     /**
@@ -93,7 +94,7 @@ class Course
         return $this->price;
     }
 
-    public function setPrice(float $price): static
+    public function setPrice(float|null $price): static
     {
         $this->price = $price;
 
@@ -143,6 +144,15 @@ class Course
     }
 
     public static function fromDto(CourseDto $dto): Course
+    {
+        return (new self())
+            ->setCharacterCode($dto->getCharacterCode())
+            ->setTitle($dto->getTitle())
+            ->setPrice($dto->getPrice())
+            ->setType(CourseType::VALUES[$dto->getType()]);
+    }
+
+    public static function fromCreateDto(CreateCourseDTO $dto): Course
     {
         return (new self())
             ->setCharacterCode($dto->getCharacterCode())

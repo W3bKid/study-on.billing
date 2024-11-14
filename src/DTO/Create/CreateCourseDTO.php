@@ -1,14 +1,17 @@
 <?php
 
-namespace App\DTO;
+namespace App\DTO\Create;
 
+use App\Entity\Course;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints\Choice;
-use Symfony\Component\Validator\Constraints\GreaterThan;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Contracts\Service\Attribute\Required;
 
-class CourseDTO {
+#[UniqueEntity(entityClass: Course::class, fields: ['character_code'])]
+class CreateCourseDTO {
     #[Serializer\Type("string")]
     #[NotBlank]
     #[Length(
@@ -17,18 +20,18 @@ class CourseDTO {
         minMessage: 'Название курса не должно быть пустым',
         maxMessage: 'Название курса не должно быть длиннее 255 символов'
     )]
-    public string $characterCode;
+    public string $character_code;
 
-    #[Serializer\Type("float")]
-    #[GreaterThan(0)]
+//    #[Serializer\Type("float")]
     public float|null $price = null;
 
     #[Serializer\Type("string")]
-    #[Choice(choices: ["Full Payment", "Free", "Rental"])]
+    #[Choice(choices: ['Free', 'Rental', 'Full Payment'])]
     public string $type;
 
     #[Serializer\Type("string")]
     #[NotBlank]
+    #[Required]
     #[Length(
         min: 1,
         max: 255,
@@ -42,7 +45,7 @@ class CourseDTO {
         return $this->type;
     }
 
-    public function setType(string $type): CourseDTO
+    public function setType(string $type): CreateCourseDTO
     {
         $this->type = $type;
         return $this;
@@ -53,7 +56,7 @@ class CourseDTO {
         return $this->price;
     }
 
-    public function setPrice(float|null $price): CourseDTO
+    public function setPrice(float $price): CreateCourseDTO
     {
         $this->price = $price;
         return $this;
@@ -61,12 +64,12 @@ class CourseDTO {
 
     public function getCharacterCode(): string
     {
-        return $this->characterCode;
+        return $this->character_code;
     }
 
-    public function setCharacterCode(string $characterCode): CourseDTO
+    public function setCharacterCode(string $character_code): CreateCourseDTO
     {
-        $this->characterCode = $characterCode;
+        $this->character_code = $character_code;
         return $this;
     }
 
@@ -75,7 +78,7 @@ class CourseDTO {
         return $this->title;
     }
 
-    public function setTitle(string $title): CourseDTO
+    public function setTitle(string $title): CreateCourseDTO
     {
         $this->title = $title;
         return $this;

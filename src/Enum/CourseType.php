@@ -8,17 +8,22 @@ enum CourseType: int {
     case FREE = 3;
 
     public const VALUES = [
-        'Payment' => self::FREE,
+        'Free' => self::FREE,
         'Rental' => self::RENTAL,
         'Full Payment' => self::FULL_PAYMENT,
     ];
 
     public function getName(): string {
         return match ($this) {
-            self::RENTAL => 'rent',
-            self::FULL_PAYMENT => 'full',
-            self::FREE => 'free',
+            self::RENTAL => 'Rental',
+            self::FULL_PAYMENT => 'Full Payment',
+            self::FREE => 'Free',
         };
+    }
+
+    public static function textValues(): array
+    {
+        return array_keys(self::VALUES);
     }
 
 }

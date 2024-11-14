@@ -12,10 +12,12 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class UserFixtures extends Fixture
 {
     private UserPasswordHasherInterface $passwordHasher;
+    private PaymentService $paymentService;
 
-    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    public function __construct(UserPasswordHasherInterface $passwordHasher, PaymentService $paymentService)
     {
         $this->passwordHasher = $passwordHasher;
+        $this->paymentService = $paymentService;
     }
 
     public function load(ObjectManager $manager): void
@@ -35,9 +37,8 @@ class UserFixtures extends Fixture
             $this->passwordHasher->hashPassword($user, "12345678")
         );
         $manager->persist($user);
-
         $manager->flush();
-
-        (new PaymentService())->deposit($adminUser, 100.00);
+        $this->paymentService->deposit($adminUser, 100.00);
+        $this->paymentService->deposit($user, 100.00);
     }
 }

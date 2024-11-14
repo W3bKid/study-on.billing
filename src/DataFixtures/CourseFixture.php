@@ -34,15 +34,15 @@ class CourseFixture extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        foreach($this->courses as $title => $courseData) {
-            $course = new Course();
-            $course->setTitle($title)
-                ->setCharacterCode($courseData['character_code'])
-                ->setPrice((float)$courseData['price'])
-                ->setType($courseData['type']);
-
-            $manager->persist($course);
-        }
-        $manager->flush();
+//        foreach($this->courses as $title => $courseData) {
+//            $course = new Course();
+//            $course->setTitle($title)
+//                ->setCharacterCode($courseData['character_code'])
+//                ->setPrice((float)$courseData['price'])
+//                ->setType($courseData['type']);
+//
+//            $manager->persist($course);
+//        }
+//        $manager->flush();
     }
 }

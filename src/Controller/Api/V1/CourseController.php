@@ -3,6 +3,7 @@
 namespace App\Controller\Api\V1;
 
 use App\DTO\CourseDTO;
+use App\DTO\Create\CreateCourseDTO;
 use App\Entity\Course;
 use App\Enum\CourseType;
 use App\Repository\CourseRepository;
@@ -56,7 +57,6 @@ class CourseController extends AbstractController
             ),
         ]
     )]
-    #[Security(name: 'Bearer')]
     #[Route(path: '/', name: 'api_courses_get', methods: ['GET'])]
     public function list(CourseRepository $courseRepository): JsonResponse
     {
@@ -126,7 +126,7 @@ class CourseController extends AbstractController
     /**
      * @throws JWTDecodeFailureException
      */
-    #[Route(path: '/{code}/pay', name: 'api_courses_pay', methods: ['GET'])]
+    #[Route(path: '/{code}/pay', name: 'api_courses_pay', methods: ['POST'])]
     #[Security(name: "Bearer")]
     #[IsGranted("ROLE_USER")]
     public function pay(
@@ -177,22 +177,25 @@ class CourseController extends AbstractController
     #[Route(path: '/', name: 'api_course_create', methods: ['POST'])]
     #[Security(name: "Bearer")]
     #[IsGranted("ROLE_SUPER_ADMIN")]
-    public function create(Request $request, CourseRepository $repository, EntityManagerInterface $entityManager): JsonResponse
+    public function create(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator
+    ): JsonResponse
     {
-        $type = CourseType::VALUES[$request->request->get('type')];
-
-        $sameCourse = $repository->findBy(['character_code' => $request->request->get('character_code')]);
-
-        if ($sameCourse) {
-            return $this->json(['message' => 'Course with same character code already exists'], 409);
+        $courseDTO = $serializer->deserialize($request->getContent(), CreateCourseDTO::class, 'json');
+        $errors = $validator->validate($courseDTO);
+        if (count($errors) > 0) {
+            return $this->json($errors, 422);
         }
 
-        $courseDTO = (new CourseDTO())->setTitle($request->get('title'))
-            ->setPrice($request->get('price'))
-            ->setCharacterCode($request->get('character_code'))
-            ->setType($type);
+        $type = CourseType::VALUES[$courseDTO->getType()];
+        if (($type == CourseType::FULL_PAYMENT || $type == CourseType::RENTAL) && $courseDTO->getPrice() <= 0) {
+            return $this->json(["detail" => "Course with Payment or Rental type must have price"], 422);
+        }
 
-        $course = Course::fromDTO($courseDTO);
+        $course = Course::fromCreateDto($courseDTO);
         $entityManager->persist($course);
         $entityManager->flush();
         return $this->json(['success' => true], 201);
@@ -205,28 +208,37 @@ class CourseController extends AbstractController
         string $characterCode,
         Request $request,
         CourseRepository $repository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        ValidatorInterface $validator
     ): JsonResponse {
         $course = $repository->findOneBy(['character_code' => $characterCode]);
 
         if (!$course) {
-            return $this->json(['message' => "Course doesn't exists"], 422);
-        }
-        if ($characterCode !== $course->getCharacterCode() && $repository->count(['code' => $course->getCharacterCode()]) > 0) {
-            return $this->json(['error' => 'Course already exists'], 409);
+            return $this->json(['message' => "Course doesn't exists"], 404);
         }
 
-        $type = CourseType::VALUES[$request->request->get('type')] ?? null;
+        if ($characterCode !== $course->getCharacterCode() &&
+            $repository->count(['code' => $course->getCharacterCode()]) > 0) {
+            return $this->json(['message' => 'Course with same code already exists'], 409);
+        }
 
-        if (($type == CourseType::FULL_PAYMENT || $type == CourseType::RENTAL) && !$request->get('price')) {
+        $courseDTO = $serializer->deserialize($request->getContent(), CourseDTO::class, 'json');
+        $errors = $validator->validate($courseDTO);
+        if (count($errors) > 0) {
+            return $this->json($errors, 422);
+        }
+
+        $requestType = json_decode($request->getContent(), true)['type'];
+        $type = CourseType::VALUES[$requestType];
+        $price = json_decode($request->getContent(), true)['price'];
+
+        if (($type == CourseType::FULL_PAYMENT || $type == CourseType::RENTAL) && $price <= 0) {
             return $this->json([
                 'message' => 'Course with Payment or Rental type must have price',
                 'code' => 422],
                 422
             );
         }
-
-        $courseDTO = $serializer->deserialize($request->getContent(), CourseDTO::class, 'json');
 
         $course->setCharacterCode($courseDTO->getCharacterCode());
         $course->setTitle($courseDTO->getTitle());
@@ -235,5 +247,24 @@ class CourseController extends AbstractController
 
         $repository->save($course);
         return $this->json(['success' => true], 200);
+    }
+
+    #[Route(path: '/{characterCode}/is-paid', name: 'api_course_id_paid', methods: ['GET'])]
+    #[Security(name: "Bearer")]
+    public function courseIsPaid(
+        string $characterCode,
+        PaymentService $paymentService,
+        CourseRepository $courseRepository,
+        UserService $userService,
+    ): JsonResponse {
+        $course = $courseRepository->findOneBy(['character_code' => $characterCode]);
+
+        if (!$course) {
+            return $this->json(['message' => "Course doesn't exists"], 422);
+        }
+
+        $isPaid = $paymentService->courseIsPaid($userService->getFromStorage()->getId(), $course);
+
+        return $this->json(['message' => $isPaid], 200);
     }
 }

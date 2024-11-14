@@ -19,9 +19,8 @@ class UserControllerTest extends WebTestCase
     private string $path = "/api/v1";
     protected $databaseTool;
 
-    private $testEmail = "eamil@email.ru";
-    private $testPassword = "password";
-    private $token = "";
+    private string $testEmail = "eamil@email.ru";
+    private string $testPassword = "password";
 
     protected function setUp(): void
     {
@@ -36,10 +35,16 @@ class UserControllerTest extends WebTestCase
         $this->databaseTool->loadFixtures([UserFixtures::class]);
     }
 
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        restore_exception_handler();
+    }
+
+
     public function testRegisterUser(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/register"),
@@ -64,7 +69,6 @@ class UserControllerTest extends WebTestCase
     public function testAuthUser(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/register"),
@@ -102,7 +106,6 @@ class UserControllerTest extends WebTestCase
     public function testCurrentUser(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/register"),
@@ -160,7 +163,6 @@ class UserControllerTest extends WebTestCase
     public function testRegisterUserWithoutPassword(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/register"),
@@ -175,7 +177,6 @@ class UserControllerTest extends WebTestCase
     public function testRegisterUserWithoutEmail(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/register"),
@@ -190,7 +191,6 @@ class UserControllerTest extends WebTestCase
     public function testAuthUserWithoutEmail(): void
     {
         set_exception_handler(null);
-
         $this->client->jsonRequest(
             "POST",
             sprintf("%s%s", $this->path, "/auth"),
@@ -205,7 +205,6 @@ class UserControllerTest extends WebTestCase
     public function testCurrentUserWithoutToken()
     {
         set_exception_handler(null);
-
         $client = static::getClient();
 
         $client->request('GET', '/api/v1/users/current', [], [], ['HTTP_AUTHORIZATION' => 'Bearer' . " "]);
@@ -215,12 +214,9 @@ class UserControllerTest extends WebTestCase
 
     public function testAdmin() {
         set_exception_handler(null);
-
         $client = static::getClient();
-
         $email = "admin@billing.ru";
         $password = "12345678";
-
         $client->jsonRequest('POST', '/api/v1/auth', [
             "username" => $email,
             "password" => $password
@@ -235,12 +231,9 @@ class UserControllerTest extends WebTestCase
 
     public function testAdminFailed() {
         set_exception_handler(null);
-
         $client = static::getClient();
-
         $email = "admin@billing.ru";
         $password = "pas";
-
         $client->jsonRequest('POST', '/api/v1/auth', [
             "username" => $email,
             "password" => $password

@@ -76,22 +76,21 @@ class PaymentService
 
     public function courseIsPaid(int $userId, Course $course): bool|Transaction
     {
+        if ($course->getType() == CourseType::FREE->value) {
+            return true;
+        }
         $transactions = $this->entityManager
             ->getRepository(Transaction::class)
             ->findByUserAndCourse($userId, $course->getId());
-
         if(!$transactions) {
             return false;
         }
-
         if ($course->getType() == CourseType::RENTAL->value) {
             return $transactions[0]->getExpiredAt() >= new \DateTime();
         }
-
         if ($transactions[0]->getType() == TransactionType::Payment->value) {
             return true;
         }
-
         return false;
     }
 }

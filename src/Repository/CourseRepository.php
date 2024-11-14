@@ -24,7 +24,7 @@ class CourseRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findByCode(string $characterCode): Course
+    public function findByCode(string $characterCode): Course|null
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.character_code = :code')
@@ -36,7 +36,6 @@ class CourseRepository extends ServiceEntityRepository
     public function save(Course $entity): void
     {
         $this->getEntityManager()->persist($entity);
-
         $this->getEntityManager()->flush();
     }
 
